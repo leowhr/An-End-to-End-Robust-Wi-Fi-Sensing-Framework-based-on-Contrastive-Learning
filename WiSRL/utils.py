@@ -11,6 +11,15 @@ def set_seed(seed: int = 42):
     torch.cuda.manual_seed_all(seed)
     np.random.seed(seed)
     random.seed(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+
+
+def seed_worker(worker_id: int):
+    """Ensure each DataLoader worker uses a deterministic seed."""
+    worker_seed = torch.initial_seed() % 2**32
+    np.random.seed(worker_seed)
+    random.seed(worker_seed)
 
 
 def nt_xent_loss(z1: torch.Tensor, z2: torch.Tensor, temperature: float = 0.5) -> torch.Tensor:
@@ -18,7 +27,10 @@ def nt_xent_loss(z1: torch.Tensor, z2: torch.Tensor, temperature: float = 0.5) -
 
     - Positive: z1[i] with z2[i] (same image, different views)
     - Negative: all other samples in the batch
+    来自于SimCLR论文的损失函数实现，适用于对比学习中的正负样本构造和损失计算。
     """
+
+    assert z1.size() == z2.size(), "Input tensors must have the same shape"
 
     batch_size = z1.size(0)
     z1 = F.normalize(z1, dim=1)

@@ -21,7 +21,7 @@ import numpy as np
 import random
 
 from models.pretraining_Biblock_model_simCLR import WiSRL_pre # Bi-Block
-from .utils import nt_xent_loss, set_seed
+from .utils import nt_xent_loss, set_seed, seed_worker
 
 import torch
 from torch.utils.data import DataLoader
@@ -48,6 +48,8 @@ def pre_training():
 
     seed =1024  # 可以换个数字试试
     set_seed(seed)  # 设置随机种子，保证结果可复现
+    generator = torch.Generator()
+    generator.manual_seed(seed)
 
 
     # shape: (n, l ,d)
@@ -66,7 +68,8 @@ def pre_training():
     init_weight_decay = 1e-3 # 衰减系数 0.001
     num_epochs = 10 # 先用10轮进行训练
     batch_size = 128 # batch大小
-    data_folder = '/mnt/data/keran/project/WiSRL/dataset/WIDAR_Pre' # 数据集路径
+    # data_folder = '/mnt/data/keran/project/WiSRL/dataset/WIDAR_Pre' # 数据集路径
+    data_folder = r"E:\CodeSpace\Wi-Mamba\Wimamba\Widar3.0\CSI_try"
     # data_folder = '/mnt/data/keran/project/Flow-LLM/FAE/dataset/XRF55_Pre'
     # data_folder = '/mnt/data/keran/project/Flow-LLM/FAE/dataset/WIDAR_Pre'
    
@@ -80,19 +83,45 @@ def pre_training():
     circular_range=(-50, 50) # 循环平移范围，-50 到 50 之间随机平移
     mask_ratio=(0, 0.1) # 随机掩码比例范围，0-0.1 之间随机掩码
     # 加载数据
-    dataset = ComplexDataset(data_folder, crop_ratio=crop_ratio, circular_range=circular_range, mask_ratio=mask_ratio)
+    full_dataset = ComplexDataset(data_folder, crop_ratio=crop_ratio, circular_range=circular_range, mask_ratio=mask_ratio)
 
-    # 数据集分割
-    train_size = int(0.8 * len(dataset) * pre_datasize)
-    val_size = len(dataset) - train_size #验证集 查看收敛情况和loss
-    train_dataset, val_dataset = torch.utils.data.random_split(dataset, [train_size, val_size])
+    # 数据集分割（固定索引，分别构建 train/val 数据集以设置不同 evaluate）
+    train_size = int(0.8 * len(full_dataset) * pre_datasize)
+    val_size = len(full_dataset) - train_size  # 验证集 查看收敛情况和loss
+    indices = torch.randperm(len(full_dataset), generator=generator).tolist()
+    train_indices = indices[:train_size]
+    val_indices = indices[train_size:train_size + val_size]
+
+    train_base = ComplexDataset(data_folder, crop_ratio=crop_ratio, circular_range=circular_range, mask_ratio=mask_ratio)
+    val_base = ComplexDataset(data_folder, crop_ratio=crop_ratio, circular_range=circular_range, mask_ratio=mask_ratio)
+    train_base.set_eval(False)
+    val_base.set_eval(True) # 注意验证集是否进行增强，不增强则得到原始的两对三天线的差别
+
+    train_dataset = torch.utils.data.Subset(train_base, train_indices)
+    val_dataset = torch.utils.data.Subset(val_base, val_indices)
    
-
     
     # 加载训练集和测试集
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, num_workers=8,  pin_memory=True, shuffle=True, drop_last=True)
+    train_loader = DataLoader(
+        train_dataset,
+        batch_size=batch_size,
+        num_workers=8,
+        pin_memory=True,
+        shuffle=True,
+        drop_last=True,
+        worker_init_fn=seed_worker,
+        generator=generator,
+    )
 
-    val_loader = DataLoader(val_dataset, batch_size=batch_size, num_workers=8,  pin_memory=True, shuffle=False)
+    val_loader = DataLoader(
+        val_dataset,
+        batch_size=batch_size,
+        num_workers=8,
+        pin_memory=True,
+        shuffle=False,
+        worker_init_fn=seed_worker,
+        generator=generator,
+    )
 
 
     # 初始化模型
@@ -133,6 +162,10 @@ def pre_training():
     model_train = model
     model_eval = model  # 评估时用未编译的模型
 
+    # 损失函数：采用 SimCLR 的 NT-Xent Loss
+    loss_fn = nt_xent_loss
+    temperature = 0.5  # SimCLR 中常用的温度参数
+
     # # Convert data to PyTorch tensors
     # mag_tensor = torch.tensor(mag, dtype=torch.float32)
     # pha_tensor = torch.tensor(pha, dtype=torch.float32)
@@ -153,14 +186,23 @@ def pre_training():
         epoch_train_loss = 0
         print(f"Epoch [{epoch+1}/{num_epochs}]训练开始")
         # print(f"Epoch [{epoch+1}/{num_epochs}]")
-        for batch_idx, (amp, pha, label) in enumerate(train_loader):
-            amp = amp.to(torch.float32).to(device)
-            pha = pha.to(torch.float32).to(device)
+        for batch_idx, (amp_view1, pha_view1, amp_view2, pha_view2, label) in enumerate(train_loader):
+            amp_view1 = amp_view1.to(torch.float32).to(device)
+            pha_view1 = pha_view1.to(torch.float32).to(device)
+            amp_view2 = amp_view2.to(torch.float32).to(device)
+            pha_view2 = pha_view2.to(torch.float32).to(device)
 
             print(f"Epoch [{epoch+1}/{num_epochs}], Batch [{batch_idx+1}/{len(train_loader)}]")
 
             # train_loss, x_amp, mask = model_train(amp)
-            train_loss, x_amp, x_pha, mask = model_train(amp, pha)
+            # train_loss, x_amp, x_pha, mask = model_train(amp, pha)
+
+            # 正向传播，得到变换后的两种视图的隐空间表示
+            z1 = model_train(amp_view1, pha_view1, get_feature=False)
+            z2 = model_train(amp_view2, pha_view2, get_feature=False)
+
+            # 计算 SimCLR 的 NT-Xent Loss
+            train_loss = loss_fn(z1, z2, temperature)
             print(f"Train Loss = [{train_loss}]")
             epoch_train_loss += train_loss.item()
 
@@ -179,15 +221,19 @@ def pre_training():
         model_eval.eval()  # 评估模式
         epoch_val_loss = 0
         with torch.no_grad():  # 关闭梯度计算，加速运算
-            for batch_idx, (amp, pha, label) in enumerate(val_loader):
-                amp = amp.to(torch.float32).to(device)
-                pha = pha.to(torch.float32).to(device)
+            for batch_idx, (amp_view1, pha_view1, amp_view2, pha_view2, label) in enumerate(val_loader):
+                amp_view1 = amp_view1.to(torch.float32).to(device)
+                pha_view1 = pha_view1.to(torch.float32).to(device)
+                amp_view2 = amp_view2.to(torch.float32).to(device)
+                pha_view2 = pha_view2.to(torch.float32).to(device)
                 # label = label.to(torch.float32).to(device)
 
                 print(f"Epoch [{epoch+1}/{num_epochs}], Batch [{batch_idx+1}/{len(val_loader)}]")
 
-                # val_loss, x_amp,mask = model_eval(amp)
-                val_loss, x_amp, x_pha, mask = model_eval(amp, pha)
+                # 采用双天线等比例融合
+                z1 = model_eval(amp_view1, pha_view1, get_feature=False)
+                z2 = model_eval(amp_view2, pha_view2, get_feature=False)
+                val_loss = loss_fn(z1, z2, temperature)
                 print(f"Validation Loss = [{val_loss}]")
                 
                 epoch_val_loss += val_loss.item()

@@ -71,6 +71,7 @@ class ComplexDataset(Dataset):
         self.crop_ratio = crop_ratio
         self.circular_range = circular_range
         self.mask_ratio = mask_ratio
+        self.evaluate = False  # 是否评估模式，评估模式不进行数据增强
 
     def __len__(self):
         """返回数据集中的样本数量"""
@@ -132,40 +133,46 @@ class ComplexDataset(Dataset):
         amplitude = amplitude.reshape(amplitude.shape[0], -1)
         phase = phase.reshape(phase.shape[0], -1)
 
-        # 天线拆分为两个view（即两个正样本）
-        antennas = torch.randperm(D)  # 随机打乱天线顺序
-        view1_idx = antennas[: D // 2]  # 前半部分天线作为 view1
-        view2_idx = antennas[D // 2 :]  # 后半部分天线作为 view2
-        amp_view1 = amplitude[:, :, view1_idx].reshape(N, L, -1)  # view1 的幅值
-        amp_view2 = amplitude[:, :, view2_idx].reshape(N, L, -1)  # view2 的幅值
-        phase_view1 = phase[:, :, view1_idx].reshape(N, L, -1)  # view1 的相位
-        phase_view2 = phase[:, :, view2_idx].reshape(N, L, -1)  # view2 的相位
+        if self.evaluate:
+            # 天线拆分为两个view（即两个正样本）
+            antennas = torch.randperm(D)  # 随机打乱天线顺序
+            view1_idx = antennas[: D // 2]  # 前半部分天线作为 view1
+            view2_idx = antennas[D // 2 :]  # 后半部分天线作为 view2
+            amp_view1 = amplitude[:, :, view1_idx].reshape(N, L, -1)  # view1 的幅值
+            amp_view2 = amplitude[:, :, view2_idx].reshape(N, L, -1)  # view2 的幅值
+            phase_view1 = phase[:, :, view1_idx].reshape(N, L, -1)  # view1 的相位
+            phase_view2 = phase[:, :, view2_idx].reshape(N, L, -1)  # view2 的相位
 
-        # 数据增强：随机裁剪、循环平移、随机掩码
-        # 1. 随机裁剪
-        amp_view1 = self.random_crop(amp_view1, crop_ratio1)
-        phase_view1 = self.random_crop(phase_view1, crop_ratio1)
-        amp_view2 = self.random_crop(amp_view2, crop_ratio2)
-        phase_view2 = self.random_crop(phase_view2, crop_ratio2)
-        # 2. 循环平移
-        amp_view1 = np.roll(amp_view1, shift=circular_shift1, axis=0)
-        phase_view1 = np.roll(phase_view1, shift=circular_shift1, axis=0)
-        amp_view2 = np.roll(amp_view2, shift=circular_shift2, axis=0)
-        phase_view2 = np.roll(phase_view2, shift=circular_shift2, axis=0)
-        # 3. 随机掩码
-        amp_view1 = self.random_mask(amp_view1, mask_ratio1)
-        phase_view1 = self.random_mask(phase_view1, mask_ratio1)
-        amp_view2 = self.random_mask(amp_view2, mask_ratio2)
-        phase_view2 = self.random_mask(phase_view2, mask_ratio2)
+            # 数据增强：随机裁剪、循环平移、随机掩码
+            # 1. 随机裁剪
+            amp_view1 = self.random_crop(amp_view1, crop_ratio1)
+            phase_view1 = self.random_crop(phase_view1, crop_ratio1)
+            amp_view2 = self.random_crop(amp_view2, crop_ratio2)
+            phase_view2 = self.random_crop(phase_view2, crop_ratio2)
+            # 2. 循环平移
+            amp_view1 = np.roll(amp_view1, shift=circular_shift1, axis=0)
+            phase_view1 = np.roll(phase_view1, shift=circular_shift1, axis=0)
+            amp_view2 = np.roll(amp_view2, shift=circular_shift2, axis=0)
+            phase_view2 = np.roll(phase_view2, shift=circular_shift2, axis=0)
+            # 3. 随机掩码
+            amp_view1 = self.random_mask(amp_view1, mask_ratio1)
+            phase_view1 = self.random_mask(phase_view1, mask_ratio1)
+            amp_view2 = self.random_mask(amp_view2, mask_ratio2)
+            phase_view2 = self.random_mask(phase_view2, mask_ratio2)
 
-        # 从文件名中提取 label
-        label = int(file_path.split('-')[1])  # 假设 label 是文件名中第一个 '-' 后面的数字
-        # filename = os.path.basename(file_path)  # 只取文件名，不带路径
-        # label_str = filename.split('-')[1]  # 这样才是文件名中第2段
-        # label = int(label_str)
+            # 从文件名中提取 label
+            label = int(file_path.split('-')[1])  # 假设 label 是文件名中第一个 '-' 后面的数字
+            # filename = os.path.basename(file_path)  # 只取文件名，不带路径
+            # label_str = filename.split('-')[1]  # 这样才是文件名中第2段
+            # label = int(label_str)
 
-
-        
+        else:
+            amp_view1 = amplitude[:, :, : D // 2].reshape(N, L, -1)  # view1 的幅值
+            amp_view2 = amplitude[:, :, D // 2 :].reshape(N, L, -1)  # view2 的幅值
+            phase_view1 = phase[:, :, : D // 2].reshape(N, L, -1)  # view1 的相位
+            phase_view2 = phase[:, :, D // 2 :].reshape(N, L, -1)  # view2 的相位
+            label = int(file_path.split('-')[1])  # 假设 label 是文件名中第一个 '-' 后面的数字
+            
         # # 返回幅值、相位和标签
         # 返回 torch.Tensor，便于在训练时直接搬到 GPU
         amp_view1 = torch.from_numpy(amp_view1.astype(np.float32))
@@ -175,6 +182,10 @@ class ComplexDataset(Dataset):
         label = torch.tensor(label, dtype=torch.long)
 
         return amp_view1, phase_view1, amp_view2, phase_view2, label
+        
+        
+
+
     
     def random_mask(self, x, mask_ratio):
         """生成时域上的随机掩码"""
@@ -209,6 +220,9 @@ class ComplexDataset(Dataset):
 
         return crop_x
     
+    def set_eval(self, evaluate=True):
+        """设置为评估模式，评估模式不进行数据增强"""
+        self.evaluate = evaluate
 
 # import os
 # import numpy as np
