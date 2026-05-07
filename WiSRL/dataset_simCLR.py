@@ -128,12 +128,8 @@ class ComplexDataset(Dataset):
         
         phase = (phase + np.pi) / (2 * np.pi)  # 相位归一化到 [0, 1]
         # print(phase.shape)
-        
 
-        amplitude = amplitude.reshape(amplitude.shape[0], -1)
-        phase = phase.reshape(phase.shape[0], -1)
-
-        if self.evaluate:
+        if not self.evaluate:
             # 天线拆分为两个view（即两个正样本）
             antennas = torch.randperm(D)  # 随机打乱天线顺序
             view1_idx = antennas[: D // 2]  # 前半部分天线作为 view1
@@ -174,6 +170,10 @@ class ComplexDataset(Dataset):
             label = int(file_path.split('-')[1])  # 假设 label 是文件名中第一个 '-' 后面的数字
             
         # # 返回幅值、相位和标签
+        amp_view1 = amp_view1.reshape(N, -1)  # 展平为 (1450, L*D/2)
+        phase_view1 = phase_view1.reshape(N, -1)
+        amp_view2 = amp_view2.reshape(N, -1)
+        phase_view2 = phase_view2.reshape(N, -1)
         # 返回 torch.Tensor，便于在训练时直接搬到 GPU
         amp_view1 = torch.from_numpy(amp_view1.astype(np.float32))
         phase_view1 = torch.from_numpy(phase_view1.astype(np.float32))
@@ -211,14 +211,21 @@ class ComplexDataset(Dataset):
         start_idx = np.random.randint(0, seq_len - crop_len + 1)
         crop_x = x[start_idx : start_idx + crop_len]
 
-        # 插值回原长度
-        crop_x = np.interp(
-            np.linspace(0, crop_len - 1, seq_len),
-            np.arange(crop_len),
-            crop_x
-        )
+        # 逐通道插值
+        old_idx = np.arange(crop_len)
+        new_idx = np.linspace(0, crop_len - 1, seq_len)
 
-        return crop_x
+        if crop_x.ndim == 1:
+            resized = np.interp(new_idx, old_idx, crop_x)
+        else:
+            rest_shape = crop_x.shape[1:]
+            flat = crop_x.reshape(crop_len, -1)  # (crop_len, channels)
+            resized_flat = np.empty((seq_len, flat.shape[1]), dtype=crop_x.dtype)
+            for j in range(flat.shape[1]):
+                resized_flat[:, j] = np.interp(new_idx, old_idx, flat[:, j])
+            resized = resized_flat.reshape((seq_len,) + rest_shape)
+
+        return resized
     
     def set_eval(self, evaluate=True):
         """设置为评估模式，评估模式不进行数据增强"""

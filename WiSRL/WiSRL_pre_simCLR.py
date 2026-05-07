@@ -21,7 +21,7 @@ import numpy as np
 import random
 
 from models.pretraining_Biblock_model_simCLR import WiSRL_pre # Bi-Block
-from .utils import nt_xent_loss, set_seed, seed_worker
+from utils import nt_xent_loss, set_seed, seed_worker
 
 import torch
 from torch.utils.data import DataLoader
@@ -44,7 +44,7 @@ def pre_training():
 
     new_Pre_checkpoint_path = "./model_weight/PRE/pre_100_Biblockv2_3+3link_test.pth"
 
-    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    device = torch.device('cuda:1' if torch.cuda.is_available() else 'cpu')
 
     seed =1024  # 可以换个数字试试
     set_seed(seed)  # 设置随机种子，保证结果可复现
@@ -66,10 +66,10 @@ def pre_training():
     init_lr = 0.0005 # 初始学习率 0.0005
     final_lr = 0.0001 # 最终学习率 0.0001
     init_weight_decay = 1e-3 # 衰减系数 0.001
-    num_epochs = 10 # 先用10轮进行训练
+    num_epochs = 100 # 先用10轮进行训练
     batch_size = 128 # batch大小
-    # data_folder = '/mnt/data/keran/project/WiSRL/dataset/WIDAR_Pre' # 数据集路径
-    data_folder = r"E:\CodeSpace\Wi-Mamba\Wimamba\Widar3.0\CSI_try"
+    data_folder = '/mnt/data/keran/project/WiSRL/dataset/WIDAR_Pre' # 数据集路径
+    # data_folder = r"E:\CodeSpace\Wi-Mamba\Wimamba\Widar3.0\CSI_try"
     # data_folder = '/mnt/data/keran/project/Flow-LLM/FAE/dataset/XRF55_Pre'
     # data_folder = '/mnt/data/keran/project/Flow-LLM/FAE/dataset/WIDAR_Pre'
    
