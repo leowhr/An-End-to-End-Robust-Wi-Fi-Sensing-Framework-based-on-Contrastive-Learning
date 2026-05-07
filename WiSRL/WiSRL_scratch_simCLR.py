@@ -1,14 +1,21 @@
-# for scratch
-## 微调数据量：100%、Encoder: Biblock v2、输入：幅值+相位 (88.31%)
-## 微调数据量：80%、Encoder: Biblock v2、输入：幅值+相位 (85.17%)
-## 微调数据量：60%、Encoder: Biblock v2、输入：幅值+相位 (82.37%)
-## 微调数据量：40%、Encoder: Biblock v2、输入：幅值+相位 (78.88%)
-## 微调数据量：20%、Encoder: Biblock v2、输入：幅值+相位 (73.46%)
+# for screatch
+## mask：0.25、微调数据量：100%、Encoder: Biblock v2 
+## mask：0.50、微调数据量：100%、Encoder: Biblock v2 
+## mask：0.75、微调数据量：100%、Encoder: Biblock v2 (92.58%)
+## mask：0.90、微调数据量：100%、Encoder: Biblock v2 
 
-## 微调数据量：100%、Encoder: Mamba、输入：幅值+相位 
+## mask：0.75、预训练数据量：80%、微调数据量：100%、Encoder: Biblock v2 (91.30%)
+## mask：0.75、预训练数据量：60%、微调数据量：100%、Encoder: Biblock v2 (92.84%)
+## mask：0.75、预训练数据量：40%、微调数据量：100%、Encoder: Biblock v2 (91.43%)
+## mask：0.75、预训练数据量：20%、微调数据量：100%、Encoder: Biblock v2 (91.17%)
 
-## 微调数据量：100%、Encoder: Biblock v2、输入：幅值
-## 微调数据量：100%、Encoder: Biblock v2、输出：幅值
+## mask：0.75、预训练数据量：100%、微调数据量：80%、Encoder: Biblock v2 (90.04%)
+## mask：0.75、预训练数据量：100%、微调数据量：60%、Encoder: Biblock v2 (88.08%)
+## mask：0.75、预训练数据量：100%、微调数据量：40%、Encoder: Biblock v2 (84.94%)
+## mask：0.75、预训练数据量：100%、微调数据量：20%、Encoder: Biblock v2 (80.31%)
+
+## 输入：幅值
+## 输出：幅值
 
 import os
 import numpy as np
@@ -17,56 +24,52 @@ import random
 from models.pretraining_Biblock_model_simCLR import WiSRL_pre # Bi-Block
 from utils import nt_xent_loss, set_seed, seed_worker
 
-from models.finetune_model import WiSRL_tune
-# from models.finetune_AMP_model import WiSRL_tune # 只输入幅值微调训练
+from models.finetune_model_simCLR import WiSRL_tune
+
 
 import torch
 from torch.utils.data import DataLoader
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-from dataset import ComplexDataset
+from dataset_simCLR import ComplexDataset
 # from dataset_HAR import AmplitudeDataset
 from torch.utils.tensorboard import SummaryWriter
 
-
+os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
 ## 下游任务微调
 def fine_tuning():
-
-    seed = 624  # 随机种子，可以换个数字试试
-    torch.manual_seed(seed)
-    torch.cuda.manual_seed_all(seed)
-    np.random.seed(seed)
-    random.seed(seed)
-
     bimamba_type = "v2"
-    tune_datasize = 0.2
+    tune_datasize = 1.0
     pre_link = 6
     tune_link = 6
+    # Pre_checkpoint_path = "./model_weight/PRE/pre_100_Biblockv2_3+3link_test.pth" #预训练权重
+    # Pre_checkpoint_path = "./model_weight/PRE/pre_75_100_Biblockv2_widar_both_1link.pth" #预训练权重
+    # Tune_checkpoint_path = "./model_weight/CLS/Finetune/tune_75_100_Biblockv2_HGR(5000).pth" #预训练权重
 
-
-    log_dir_path = "./runs/CLS/Scratch/scratch_100_20_Biblockv2_widar_6link(5000)" #日志
+    log_dir_path = "./runs/Scratch/CLS/scratch_100_Biblockv2_3+3link_test" #日志
 
     ## 加载的数据
-    # old_Tune_final_weight_path = "./model_weight/wimamba_U1_4_2_final_100_tune100_finetuning.pth" # 上次训练最后的模型
 
-    old_Tune_checkpoint_path = "./model_weight/CLS/Scratch/scratch_100_20_Biblockv2_widar_6link(5000).pth" # 上次训练某一轮保存的微调权重和优化器状态
+    old_Tune_checkpoint_path = "./model_weight/Scratch/CLS/scratch_100_Biblockv2_3+3link_test.pth" # 上次训练某一轮保存的微调权重和优化器状态
 
     ## 保存的数据
-    # Tune_final_weight_path = "./model_weight/wimambassm_U1_3_2_best_100_10fenlei_tune50_final_scratch_finetune(lr-0.0004-0.0001).pth" # 保存最后模型
+    new_Tune_checkpoint_path = "./model_weight/Scratch/CLS/scratch_100_Biblockv2_3+3link_test.pth" # 每一轮保存的微调权重和优化器状态
 
-    new_Tune_checkpoint_path = "./model_weight/CLS/Scratch/scratch_100_20_Biblockv2_widar_6link(5000).pth" # 每一轮保存的微调权重和优化器状态
+    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+
+    seed = 624 # 随机种子，可以换个数字试试
+    set_seed(seed)  # 设置随机种子，保证结果可复现
+    generator = torch.Generator()
+    generator.manual_seed(seed)
 
     # shape: (n, l ,d)
     
-    
-    input_dim_pre = 90 * pre_link
-    input_dim_tune = 90 * tune_link
+    input_dim_pre = 90*3
     hidden_dim = 64 # 32 64 128
     encoder_n_layers = 3 # encoder稍微层数多一点，承担更多任务
-    decoder_n_layers = 2 # decoder稍微简单一点，有利于encoder得到更好的信号表示
     # frozen_n_layer = encoder_n_layers - 1
-    mask_ratio = 0.75
+    
     output_dim = 10 # 输出类别
 
     train_losses = []  # 用来记录训练过程中每个epoch的训练损失
@@ -74,30 +77,29 @@ def fine_tuning():
     train_accuracy = [] # 用来记录训练过程中每个epoch的验证准确度
     val_accuracy =[] # 用来记录训练过程中每个epoch的验证准确度
 
-    init_lr = 0.0003 # 学习率 0.0004
-    final_lr = 0.00007 # 最终学习率
+    init_lr = 0.0003 # 学习率 0.0003
+    final_lr = 7e-05 # 最终学习率
     init_weight_decay = 2e-3 # 衰减系数 0.002
-    num_epochs = 50 # 先用10轮进行训练
+    num_epochs = 50 # 先用50轮进行训练
     batch_size = 64 # batch大小
-    data_folder = './dataset/10fenlei(5000)' # 数据集路径
-    # data_folder = '/mnt/data/keran/project/Flow-LLM/FAE/dataset/10fenlei'
+    data_folder = '/mnt/data/keran/project/WiSRL/dataset/10fenlei(5000)' # 数据集路径
     # data_folder = '/mnt/data/keran/project/Flow-LLM/FAE/dataset/XRF55_HAR'
+    # data_folder = '/mnt/data/keran/project/Flow-LLM/FAE/dataset/10fenlei'
 
-
-    
+    best_accuracy = 0
 
     # **检查是否存在已保存的 checkpoint**
     start_epoch = 0  # 记录从哪个 epoch 开始训练
 
 
-    device = torch.device('cuda:1' if torch.cuda.is_available() else 'cpu')
-
     # 加载数据
     dataset = ComplexDataset(data_folder)
+    dataset.set_eval(True)  # 设置为评估模式，确保数据不被增强
 
-    # 数据集分割
+    # 数据集分割* tune_datasize,generator=generator
     train_size = int(0.9 * len(dataset) * tune_datasize)
-    val_size = len(dataset) - train_size #验证集 查看收敛情况和loss
+    val_size = len(dataset) - train_size
+    # generator = torch.Generator().manual_seed(seed)
     train_dataset, val_dataset = torch.utils.data.random_split(dataset, [train_size, val_size])
     
 
@@ -105,33 +107,34 @@ def fine_tuning():
     # 加载训练集和测试集
     train_loader = DataLoader(train_dataset, batch_size=batch_size, num_workers=8,  pin_memory=True, shuffle=True, drop_last=True)
 
-    val_loader = DataLoader(val_dataset, batch_size=batch_size, num_workers=8,  pin_memory=True, shuffle=False)
+    val_loader = DataLoader(val_dataset, batch_size=batch_size, num_workers=8,  pin_memory=True, shuffle=False, drop_last=False)
+
 
 
     # 初始化模型
     model_pre = WiSRL_pre(
         input_dim=input_dim_pre,
         hidden_dim=hidden_dim,
-        bimamba_type = bimamba_type, 
-        encoder_nlayers=encoder_n_layers,
-        decoder_nlayers=decoder_n_layers,
-        mask_ratio=mask_ratio
+        proj_dim=0,  # 微调阶段不使用投影头
+        bimamba_type = bimamba_type,
+        encoder_nlayers=encoder_n_layers
     ).to(device)
 
 
     ## 定义微调模型
     model_tune = WiSRL_tune(
         original_model=model_pre,
-        # input_dim=input_dim_tune,
+        # frozen_n_layer = frozen_n_layer,
         hidden_dim=hidden_dim,
         output_dim=output_dim
     ).to(device)
+
 
     # 定义优化器 AdamW
     optimizer = optim.AdamW(filter(lambda p: p.requires_grad, model_tune.parameters()), lr=init_lr, weight_decay=init_weight_decay) # 使用AdamW优化器，防止梯度爆炸
 
     
-    ## 定义调度器 scheduler，保证学习率
+    # 定义调度器 scheduler，保证学习率
     scheduler = torch.optim.lr_scheduler.SequentialLR(
     optimizer,
     schedulers=[
@@ -155,7 +158,8 @@ def fine_tuning():
         optimizer.load_state_dict(Tune_checkpoint['optimizer_state_dict'])
         scheduler.load_state_dict(Tune_checkpoint['scheduler_state_dict'])
         start_epoch = Tune_checkpoint['epoch'] + 1  # 继续训练
-        print(f"加载 checkpoint 成功！从 epoch {start_epoch} 继续训练")
+        best_accuracy = Tune_checkpoint['best_accuracy']
+        print(f"加载 checkpoint 成功！从 epoch {start_epoch} 继续训练! 当前准确率为{best_accuracy}!")
 
     
 
@@ -176,20 +180,23 @@ def fine_tuning():
     torch.backends.cudnn.allow_tf32 = False
 
 
-    best_accuracy = 0
+   
     # train 
     # 要好好修改一下maybe，期望能够在每个世代训练后给出一个平均loss，方便观察收敛情况
     for epoch in range(start_epoch, num_epochs):
+        torch.cuda.empty_cache()
         model_train.train()
         epoch_train_loss = 0
         epoch_train_accuracy = 0
         print(f"Epoch [{epoch+1}/{num_epochs}]训练开始")
         # print(f"Epoch [{epoch+1}/{num_epochs}]")
-        for batch_idx, (amplitude, phase, label) in enumerate(train_loader):
-            amplitude = amplitude.to(torch.float32).to(device)
-            phase = phase.to(torch.float32).to(device)
-            label = label.to(torch.long).to(device) 
-            label = label - 13 
+        for batch_idx, (amp_view1, pha_view1, amp_view2, pha_view2, label) in enumerate(train_loader):
+            amp_view1 = amp_view1.to(torch.float32).to(device)
+            pha_view1 = pha_view1.to(torch.float32).to(device)
+            amp_view2 = amp_view2.to(torch.float32).to(device)
+            pha_view2 = pha_view2.to(torch.float32).to(device)
+            label = label.to(torch.long).to(device)
+            label = label - 13
 
             # 使用 label_map 进行转换
             # label = torch.tensor([label_map[l.item()] for l in label], dtype=torch.long, device=device)
@@ -197,8 +204,8 @@ def fine_tuning():
 
             print(f"Epoch [{epoch+1}/{num_epochs}], Batch [{batch_idx+1}/{len(train_loader)}]")
 
-            logits = model_train(amplitude, phase)
-            # logits = model_train(amplitude)
+            # logits = model_train(real)
+            logits = model_train(amp_view1, amp_view2, pha_view1, pha_view2)
             # print("logits shape",logits.shape)
 
             train_loss = criterion(logits, label)
@@ -220,6 +227,7 @@ def fine_tuning():
             epoch_train_accuracy += accuracy
 
             print(f"Train Accuracy: {accuracy:.4f}")
+
 
             # 记录 batch 级别的 accuracy
             writer.add_scalar("Accuracy/train_batch", accuracy, epoch * len(train_loader) + batch_idx)
@@ -245,11 +253,16 @@ def fine_tuning():
         # Validation 验证模型性能
         model_eval.eval()  # 评估模式
         epoch_val_loss = 0
-        epoch_val_accuracy = 0
+        # epoch_val_accuracy = 0
+        val_predictions_list = []
+        val_labels_list = [] 
+
         with torch.no_grad():  # 关闭梯度计算，加速运算
-            for batch_idx, (amplitude, phase, label) in enumerate(val_loader):
-                amplitude = amplitude.to(torch.float32).to(device)
-                phase = phase.to(torch.float32).to(device)
+            for batch_idx, (amp_view1, pha_view1, amp_view2, pha_view2, label) in enumerate(val_loader):
+                amp_view1 = amp_view1.to(torch.float32).to(device)
+                pha_view1 = pha_view1.to(torch.float32).to(device)
+                amp_view2 = amp_view2.to(torch.float32).to(device)
+                pha_view2 = pha_view2.to(torch.float32).to(device)
                 label = label.to(torch.long).to(device)
                 label = label - 13
 
@@ -258,8 +271,7 @@ def fine_tuning():
 
                 print(f"Epoch [{epoch+1}/{num_epochs}], Batch [{batch_idx+1}/{len(val_loader)}]")
 
-                logits = model_eval(amplitude, phase)
-                # logits = model_eval(amplitude)
+                logits = model_eval(amp_view1, amp_view2, pha_view1, pha_view2)
 
                 val_loss = criterion(logits, label)
                 print(f"Validation Loss = [{val_loss}]")
@@ -274,9 +286,13 @@ def fine_tuning():
                 correct = (predictions == label).sum().item()  # 统计正确个数
                 total = label.size(0)  # 统计总样本数
                 accuracy = correct / total
-                epoch_val_accuracy += accuracy
+                # epoch_val_accuracy += accuracy
 
                 print(f"Validation Accuracy: {accuracy:.4f}")
+
+                # 存储数据
+                val_predictions_list.append(predictions.cpu())  
+                val_labels_list.append(label.cpu())
 
 
     
@@ -284,29 +300,45 @@ def fine_tuning():
         val_losses.append(avg_val_loss)
         writer.add_scalar("Loss/val_epoch", avg_val_loss, epoch)
 
-        avg_val_accuracy = epoch_val_accuracy / len(val_loader)
+
+        # **转换为 NumPy 数组**
+        val_labels = torch.cat(val_labels_list)
+        val_predictions = torch.cat(val_predictions_list)
+
+        val_correct = (val_predictions == val_labels).sum().item()  # 统计正确个数
+        val_total = val_labels.size(0)  # 统计总样本数
+        avg_val_accuracy = val_correct / val_total
+
         val_accuracy.append(avg_val_accuracy)
         writer.add_scalar("Accuracy/val_epoch", avg_val_accuracy, epoch)
 
+        # avg_val_accuracy = epoch_val_accuracy / len(val_loader)
+        # val_accuracy.append(avg_val_accuracy)
+        # writer.add_scalar("Accuracy/val_epoch", avg_val_accuracy, epoch)
+
         print(f"Epoch {epoch+1}: Train Loss = {train_losses[-1]}, Val Loss = {val_losses[-1]}, Train Accuracy = {train_accuracy[-1]},Val Accuracy = {val_accuracy[-1]}")
+
+        
 
         # 记录学习率
         current_lr = scheduler.optimizer.param_groups[0]['lr']
         writer.add_scalar("Learning Rate", current_lr, epoch)
         print(f"Epoch {epoch+1}: 当前学习率 = {current_lr}")
 
+        ## 保存该轮微调模型参数及状态
         if best_accuracy <= avg_val_accuracy:
             best_accuracy = avg_val_accuracy
             torch.save({
                 'epoch': epoch,
+                'best_accuracy':best_accuracy,
                 'model_state_dict': model_tune.state_dict(),
                 'optimizer_state_dict': optimizer.state_dict(),
                 'scheduler_state_dict': scheduler.state_dict(),
             }, new_Tune_checkpoint_path)
             print(f"已保存微调checkpoint")
         print(f"当前最佳精度: best_accuracy = {best_accuracy}")
-        
-        ## 保存该轮微调模型参数及状态
+
+
         # torch.save({
         #         'epoch': epoch,
         #         'model_state_dict': model_tune.state_dict(),
@@ -327,7 +359,12 @@ def fine_tuning():
 
     ## **保存模型**
     # torch.save(model_tune.state_dict(), Tune_final_weight_path)
-    print("Wi-Mamba_scratch_finetune saved successfully.")
+    print("Wi-Mamba_tune saved successfully.")
+
+
+    
+
+
 
 
 if __name__ == "__main__":
