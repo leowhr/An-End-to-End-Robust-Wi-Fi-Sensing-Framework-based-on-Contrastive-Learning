@@ -20,10 +20,8 @@ class Encoder(nn.Module):
         self.pooling = pooling
         self.norm = nn.LayerNorm(hidden_dim)
     
-    def forward(self, x, get_feature=False):
+    def forward(self, x):
         x=self.encoder(x)
-        if get_feature:
-            return x
 
         # 根据pooling方式对序列进行池化，得到固定维度的表示
         x = self.norm(x)
@@ -113,13 +111,13 @@ class WiSRL_pre(nn.Module):
         amp_emb = self.embedding_amp(amp)  # (batch_size, seq_len, hidden_dim)
         pha_emb = self.embedding_pha(pha)  # (batch_size, seq_len, hidden_dim)
 
-        amp_feat = self.encoder_amp(amp_emb, get_feature=get_feature)  # (batch_size, hidden_dim) if get_feature else (batch_size, hidden_dim)
-        pha_feat = self.encoder_pha(pha_emb, get_feature=get_feature)  # (batch_size, hidden_dim)
+        amp_feat = self.encoder_amp(amp_emb)  # (batch_size, hidden_dim)
+        pha_feat = self.encoder_pha(pha_emb)  # (batch_size, hidden_dim)
 
         combined_feat = self.middle_concat(amp_feat, pha_feat)  # (batch_size, hidden_dim)
 
         if get_feature:
             return combined_feat
-
-        proj = self.projection_head(combined_feat)  # (batch_size, proj_dim)
-        return proj
+        else:
+            proj = self.projection_head(combined_feat)  # (batch_size, proj_dim)
+            return proj
