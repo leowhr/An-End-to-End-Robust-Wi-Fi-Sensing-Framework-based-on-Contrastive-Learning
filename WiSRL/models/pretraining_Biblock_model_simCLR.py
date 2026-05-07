@@ -105,11 +105,15 @@ class WiSRL_pre(nn.Module):
                 nn.init.zeros_(module.bias)
 
     def forward(self, amp, pha, get_feature=False):
-        # 输入 amp 和 pha 的形状为 (batch_size, seq_len=1450, input_dim=90*6)
+        # 输入 amp 和 pha 的形状为 (batch_size, seq_len=1450, input_dim=90*3)
+        assert amp.shape == pha.shape, "Amplitude and Phase inputs must have the same shape"
+        assert amp.dim() == 3, "Input tensors must be 3-dimensional (batch_size, seq_len, input_dim)"
+        assert amp.shape[1] == 1450, "Sequence length must be 1450"
+        assert amp.shape[2] == 90*3, "Input dimension must be 270 (90*3)"
         amp_emb = self.embedding_amp(amp)  # (batch_size, seq_len, hidden_dim)
         pha_emb = self.embedding_pha(pha)  # (batch_size, seq_len, hidden_dim)
 
-        amp_feat = self.encoder_amp(amp_emb, get_feature=get_feature)  # (batch_size, hidden_dim)
+        amp_feat = self.encoder_amp(amp_emb, get_feature=get_feature)  # (batch_size, hidden_dim) if get_feature else (batch_size, hidden_dim)
         pha_feat = self.encoder_pha(pha_emb, get_feature=get_feature)  # (batch_size, hidden_dim)
 
         combined_feat = self.middle_concat(amp_feat, pha_feat)  # (batch_size, hidden_dim)
