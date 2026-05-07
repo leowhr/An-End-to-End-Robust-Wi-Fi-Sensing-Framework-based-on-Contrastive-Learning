@@ -84,7 +84,25 @@ class WiSRL_pre(nn.Module):
             n_layers=encoder_nlayers
         ) # 相位编码器
         self.middle_concat = MiddleConcat(hidden_dim)  # 中间特征融合模块
-        self.projection_head = ProjectionHead(hidden_dim, proj_dim)  # SimCLR投影头
+        if proj_dim > 0:
+            self.projection_head = ProjectionHead(hidden_dim, proj_dim)  # SimCLR投影头
+        else:
+            self.projection_head = nn.Identity()  # 如果不需要投影头，使用恒等映射  
+        self.apply(self._init_linear_kaiming)
+
+    @staticmethod
+    def _init_linear_kaiming(module: nn.Module):
+        if isinstance(module, nn.Linear):
+            nn.init.kaiming_uniform_(module.weight, a=0.0, nonlinearity="relu")
+            if module.bias is not None:
+                nn.init.zeros_(module.bias)
+
+    @staticmethod
+    def _init_linear_xavier(module: nn.Module):
+        if isinstance(module, nn.Linear):
+            nn.init.xavier_uniform_(module.weight)
+            if module.bias is not None:
+                nn.init.zeros_(module.bias)
 
     def forward(self, amp, pha, get_feature=False):
         # 输入 amp 和 pha 的形状为 (batch_size, seq_len=1450, input_dim=90*6)
