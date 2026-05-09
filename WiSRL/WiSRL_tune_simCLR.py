@@ -1,18 +1,5 @@
 # for finetuning
-## mask：0.25、微调数据量：100%、Encoder: Biblock v2 
-## mask：0.50、微调数据量：100%、Encoder: Biblock v2 
-## mask：0.75、微调数据量：100%、Encoder: Biblock v2 (92.58%)
-## mask：0.90、微调数据量：100%、Encoder: Biblock v2 
-
-## mask：0.75、预训练数据量：80%、微调数据量：100%、Encoder: Biblock v2 (91.30%)
-## mask：0.75、预训练数据量：60%、微调数据量：100%、Encoder: Biblock v2 (92.84%)
-## mask：0.75、预训练数据量：40%、微调数据量：100%、Encoder: Biblock v2 (91.43%)
-## mask：0.75、预训练数据量：20%、微调数据量：100%、Encoder: Biblock v2 (91.17%)
-
-## mask：0.75、预训练数据量：100%、微调数据量：80%、Encoder: Biblock v2 (90.04%)
-## mask：0.75、预训练数据量：100%、微调数据量：60%、Encoder: Biblock v2 (88.08%)
-## mask：0.75、预训练数据量：100%、微调数据量：40%、Encoder: Biblock v2 (84.94%)
-## mask：0.75、预训练数据量：100%、微调数据量：20%、Encoder: Biblock v2 (80.31%)
+# 结果 97.4%
 
 ## 输入：幅值
 ## 输出：幅值
