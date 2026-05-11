@@ -1,17 +1,20 @@
 # for finetuning
 # 结果 97.4%
 
-## 输入：幅值
-## 输出：幅值
+# 输入类型
+## 仅幅值
+## 仅相位
 
 import os
 import numpy as np
 import random
 
 from models.pretraining_Biblock_model_simCLR import WiSRL_pre # Bi-Block
+from models.pretrain_Biblock_model_simCLR_single import WiSRL_pre as WiSRL_pre_single # Single-input
 from utils import nt_xent_loss, set_seed, seed_worker
 
 from models.finetune_model_simCLR import WiSRL_tune
+from models.finetune_model_simCLR_single import WiSRL_tune as WiSRL_tune_single # Single-input
 
 
 import torch
@@ -30,6 +33,10 @@ def fine_tuning():
     tune_datasize = 1.0
     pre_link = 6
     tune_link = 6
+
+    # 输入类型："both"（幅值+相位），"amp"（仅幅值），"pha"（仅相位）
+    input_type = "both"
+
     Pre_checkpoint_path = "./model_weight/PRE/pre_100_Biblockv2_3+3link_test.pth" #预训练权重
     # Pre_checkpoint_path = "./model_weight/PRE/pre_75_100_Biblockv2_widar_both_1link.pth" #预训练权重
     # Tune_checkpoint_path = "./model_weight/CLS/Finetune/tune_75_100_Biblockv2_HGR(5000).pth" #预训练权重
@@ -105,6 +112,12 @@ def fine_tuning():
         proj_dim=0,  # 微调阶段不使用投影头
         bimamba_type = bimamba_type,
         encoder_nlayers=encoder_n_layers
+    ).to(device) if input_type == "both" else WiSRL_pre_single(
+        input_dim=input_dim_pre,
+        hidden_dim=hidden_dim,
+        proj_dim=0,  # 微调阶段不使用投影头
+        bimamba_type = bimamba_type,
+        encoder_nlayers=encoder_n_layers
     ).to(device)
 
 
@@ -116,6 +129,11 @@ def fine_tuning():
 
     ## 定义微调模型
     model_tune = WiSRL_tune(
+        original_model=model_pre,
+        # frozen_n_layer = frozen_n_layer,
+        hidden_dim=hidden_dim,
+        output_dim=output_dim
+    ).to(device) if input_type == "both" else WiSRL_tune_single(
         original_model=model_pre,
         # frozen_n_layer = frozen_n_layer,
         hidden_dim=hidden_dim,
@@ -198,7 +216,12 @@ def fine_tuning():
             print(f"Epoch [{epoch+1}/{num_epochs}], Batch [{batch_idx+1}/{len(train_loader)}]")
 
             # logits = model_train(real)
-            logits = model_train(amp_view1, amp_view2, pha_view1, pha_view2)
+            if input_type == "both":
+                logits = model_train(amp_view1, amp_view2, pha_view1, pha_view2)
+            elif input_type == "amp":
+                logits = model_train(amp_view1, amp_view2)
+            elif input_type == "pha":
+                logits = model_train(pha_view1, pha_view2)
             # print("logits shape",logits.shape)
 
             train_loss = criterion(logits, label)
@@ -264,7 +287,12 @@ def fine_tuning():
 
                 print(f"Epoch [{epoch+1}/{num_epochs}], Batch [{batch_idx+1}/{len(val_loader)}]")
 
-                logits = model_eval(amp_view1, amp_view2, pha_view1, pha_view2)
+                if input_type == "both":
+                    logits = model_eval(amp_view1, amp_view2, pha_view1, pha_view2)
+                elif input_type == "amp":
+                    logits = model_eval(amp_view1, amp_view2)
+                elif input_type == "pha":             
+                    logits = model_eval(pha_view1, pha_view2)
 
                 val_loss = criterion(logits, label)
                 print(f"Validation Loss = [{val_loss}]")

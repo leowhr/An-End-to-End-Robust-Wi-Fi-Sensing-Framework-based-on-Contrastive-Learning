@@ -1,26 +1,29 @@
 ## for pretraining
-## mask: 0.25、预训练数据量: 100%、Encoder: Biblock v2、input: 幅值+相位 (finish)
-## mask: 0.50、预训练数据量: 100%、Encoder: Biblock v2、input: 幅值+相位 (finish)
-## mask: 0.75、预训练数据量: 100%、Encoder: Biblock v2、input: 幅值+相位 (finish)
-## mask: 0.90、预训练数据量: 100%、Encoder: Biblock v2、input: 幅值+相位 (finish)
+# 输入类型
+## 仅幅值
+## 仅相位
 
-## mask: 0.75、预训练数据量: 80%、Encoder: Biblock v2、input: 幅值+相位 (finish)
-## mask: 0.75、预训练数据量: 60%、Encoder: Biblock v2、input: 幅值+相位 (finish)
-## mask: 0.75、预训练数据量: 40%、Encoder: Biblock v2、input: 幅值+相位 (finish)
-## mask: 0.75、预训练数据量: 20%、Encoder: Biblock v2、input: 幅值+相位 (finish)
+# 预训练数据量
+## 80
+## 60
+## 40
+## 20
 
-## mask: 0.75、预训练数据量: 100%、Encoder: Biblock v1、input: 幅值+相位 (finish)
-## mask: 0.75、预训练数据量: 100%、Encoder: Biencoder、input: 幅值+相位 (finish)
-## mask: 0.75、预训练数据量: 100%、Encoder: Mamba、input: 幅值+相位 (finish)
+# 数据增强方案
+## 天线分割+加噪
+## 仅天线分割
 
-## mask: 0.75、预训练数据量: 100%、Encoder: Biblock v2、input: 幅值 (finish)
-## mask: 0.75、预训练数据量: 100%、Encoder: Biblock v2、output: 幅值 (finish)
+# Batch 大小
+## 64
+## 128
+## 256
 
 import os
 import numpy as np
 import random
 
 from models.pretraining_Biblock_model_simCLR import WiSRL_pre # Bi-Block
+from models.pretrain_Biblock_model_simCLR_single import WiSRL_pre as WiSRL_pre_single # Single-input
 from utils import nt_xent_loss, set_seed, seed_worker
 
 import torch
@@ -36,6 +39,9 @@ def pre_training():
     bimamba_type = "v2"
     pre_datasize = 1
     pre_link = 6
+
+    # 输入类型："both"（幅值+相位），"amp"（仅幅值），"pha"（仅相位）
+    input_type = "both"
     # 日志位置
     log_dir_path = "./runs/PRE/pre_100_Biblockv2_3+3link_test"
 
@@ -131,6 +137,12 @@ def pre_training():
         proj_dim=proj_dim,
         bimamba_type=bimamba_type,
         encoder_nlayers=encoder_n_layers
+    ).to(device) if input_type == "both" else WiSRL_pre_single(
+        input_dim=input_dim_pre,
+        hidden_dim=hidden_dim,
+        proj_dim=proj_dim,
+        bimamba_type=bimamba_type,
+        encoder_nlayers=encoder_n_layers
     ).to(device)
 
     # 定义优化器 AdamW
@@ -198,8 +210,19 @@ def pre_training():
             # train_loss, x_amp, x_pha, mask = model_train(amp, pha)
 
             # 正向传播，得到变换后的两种视图的隐空间表示
-            z1 = model_train(amp_view1, pha_view1, get_feature=False)
-            z2 = model_train(amp_view2, pha_view2, get_feature=False)
+            if input_type == "both":
+                z1 = model_train(amp_view1, pha_view1, get_feature=False)
+            elif input_type == "pha":
+                z1 = model_train(pha_view1, get_feature=False)
+            elif input_type == "amp":
+                z1 = model_train(amp_view1, get_feature=False)
+
+            if input_type == "both":
+                z2 = model_train(amp_view2, pha_view2, get_feature=False)
+            elif input_type == "pha":
+                z2 = model_train(pha_view2, get_feature=False)
+            elif input_type == "amp":
+                z2 = model_train(amp_view2, get_feature=False)
 
             # 计算 SimCLR 的 NT-Xent Loss
             train_loss = loss_fn(z1, z2, temperature)
@@ -231,8 +254,20 @@ def pre_training():
                 print(f"Epoch [{epoch+1}/{num_epochs}], Batch [{batch_idx+1}/{len(val_loader)}]")
 
                 # 采用双天线等比例融合
-                z1 = model_eval(amp_view1, pha_view1, get_feature=False)
-                z2 = model_eval(amp_view2, pha_view2, get_feature=False)
+                if input_type == "both":
+                    z1 = model_eval(amp_view1, pha_view1, get_feature=False)
+                elif input_type == "pha":
+                    z1 = model_eval(pha_view1, get_feature=False)
+                elif input_type == "amp":
+                    z1 = model_eval(amp_view1, get_feature=False)
+
+                if input_type == "both":
+                    z2 = model_eval(amp_view2, pha_view2, get_feature=False)
+                elif input_type == "pha":
+                    z2 = model_eval(pha_view2, get_feature=False)
+                elif input_type == "amp":
+                    z2 = model_eval(amp_view2, get_feature=False)
+
                 val_loss = loss_fn(z1, z2, temperature)
                 print(f"Validation Loss = [{val_loss}]")
                 
