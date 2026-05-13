@@ -41,14 +41,14 @@ def pre_training():
     pre_link = 6
 
     # 输入类型："both"（幅值+相位），"amp"（仅幅值），"pha"（仅相位）
-    input_type = "both"
+    input_type = "pha"
     # 日志位置
-    log_dir_path = "./runs/PRE/pre_100_Biblockv2_3+3link_test"
+    log_dir_path = "./runs/PRE/pre_100_Biblockv2_3+3link_test_pha"
 
     # 加载的参数
-    old_Pre_checkpoint_path = "./model_weight/PRE/pre_100_Biblockv2_3+3link_test.pth"
+    old_Pre_checkpoint_path = "./model_weight/PRE/pre_100_Biblockv2_3+3link_test_pha.pth"
 
-    new_Pre_checkpoint_path = "./model_weight/PRE/pre_100_Biblockv2_3+3link_test.pth"
+    new_Pre_checkpoint_path = "./model_weight/PRE/pre_100_Biblockv2_3+3link_test_pha.pth"
 
     device = torch.device('cuda:1' if torch.cuda.is_available() else 'cpu')
 
