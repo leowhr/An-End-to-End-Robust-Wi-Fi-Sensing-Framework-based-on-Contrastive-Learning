@@ -35,20 +35,20 @@ def fine_tuning():
     tune_link = 6
 
     # 输入类型："both"（幅值+相位），"amp"（仅幅值），"pha"（仅相位）
-    input_type = "both"
+    input_type = "pha"
 
-    Pre_checkpoint_path = "./model_weight/PRE/pre_100_Biblockv2_3+3link_test.pth" #预训练权重
+    Pre_checkpoint_path = "./model_weight/PRE/pre_100_Biblockv2_3+3link_test_pha.pth" #预训练权重
     # Pre_checkpoint_path = "./model_weight/PRE/pre_75_100_Biblockv2_widar_both_1link.pth" #预训练权重
     # Tune_checkpoint_path = "./model_weight/CLS/Finetune/tune_75_100_Biblockv2_HGR(5000).pth" #预训练权重
 
-    log_dir_path = "./runs/Finetune/CLS/tune_100_100_Biblockv2_3+3link_test" #日志
+    log_dir_path = "./runs/Finetune/CLS/tune_100_100_Biblockv2_3+3link_test_pha" #日志
 
     ## 加载的数据
 
-    old_Tune_checkpoint_path = "./model_weight/Finetune/CLS/tune_100_100_Biblockv2_3+3link_test.pth" # 上次训练某一轮保存的微调权重和优化器状态
+    old_Tune_checkpoint_path = "./model_weight/Finetune/CLS/tune_100_100_Biblockv2_3+3link_test_pha.pth" # 上次训练某一轮保存的微调权重和优化器状态
 
     ## 保存的数据
-    new_Tune_checkpoint_path = "./model_weight/Finetune/CLS/tune_100_100_Biblockv2_3+3link_test.pth" # 每一轮保存的微调权重和优化器状态
+    new_Tune_checkpoint_path = "./model_weight/Finetune/CLS/tune_100_100_Biblockv2_3+3link_test_pha.pth" # 每一轮保存的微调权重和优化器状态
 
     device = torch.device('cuda:1' if torch.cuda.is_available() else 'cpu')
 
