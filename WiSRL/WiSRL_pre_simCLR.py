@@ -41,14 +41,14 @@ def pre_training():
     pre_link = 6
 
     # 输入类型："both"（幅值+相位），"amp"（仅幅值），"pha"（仅相位）
-    input_type = "pha"
+    input_type = "both"
     # 日志位置
-    log_dir_path = "./runs/PRE/pre_100_Biblockv2_3+3link_test_pha"
+    log_dir_path = "./runs/PRE/pre_100_Biblockv2_3+3link_test_bz64"
 
     # 加载的参数
-    old_Pre_checkpoint_path = "./model_weight/PRE/pre_100_Biblockv2_3+3link_test_pha.pth"
+    old_Pre_checkpoint_path = "./model_weight/PRE/pre_100_Biblockv2_3+3link_test_bz64.pth"
 
-    new_Pre_checkpoint_path = "./model_weight/PRE/pre_100_Biblockv2_3+3link_test_pha.pth"
+    new_Pre_checkpoint_path = "./model_weight/PRE/pre_100_Biblockv2_3+3link_test_bz64.pth"
 
     device = torch.device('cuda:1' if torch.cuda.is_available() else 'cpu')
 
@@ -73,7 +73,7 @@ def pre_training():
     final_lr = 0.0001 # 最终学习率 0.0001
     init_weight_decay = 1e-3 # 衰减系数 0.001
     num_epochs = 100 # 先用10轮进行训练
-    batch_size = 128 # batch大小
+    batch_size = 64 # batch大小
     data_folder = '/mnt/data/keran/project/WiSRL/dataset/WIDAR_Pre' # 数据集路径
     # data_folder = r"E:\CodeSpace\Wi-Mamba\Wimamba\Widar3.0\CSI_try"
     # data_folder = '/mnt/data/keran/project/Flow-LLM/FAE/dataset/XRF55_Pre'
