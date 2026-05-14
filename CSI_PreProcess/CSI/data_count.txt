@@ -1,0 +1,271 @@
+Widar3.0 Data Count Summary
+==========================
+Total .dat files: 226020
+Total unique samples (ignore receiver): 37670
+
+Excluded Files (matched empty sample prefixes)
+--------------------------------------------
+Total excluded files: 42
+20181109/user2/user2-6-4-4-2-r1.dat
+20181109/user2/user2-6-4-4-2-r2.dat
+20181109/user2/user2-6-4-4-2-r3.dat
+20181109/user2/user2-6-4-4-2-r4.dat
+20181109/user2/user2-6-4-4-2-r5.dat
+20181109/user2/user2-6-4-4-2-r6.dat
+20181109/user3/user3-1-3-1-8-r1.dat
+20181109/user3/user3-1-3-1-8-r2.dat
+20181109/user3/user3-1-3-1-8-r3.dat
+20181109/user3/user3-1-3-1-8-r4.dat
+20181109/user3/user3-1-3-1-8-r5.dat
+20181109/user3/user3-1-3-1-8-r6.dat
+20181118/user2/user2-3-5-3-4-r1.dat
+20181118/user2/user2-3-5-3-4-r2.dat
+20181118/user2/user2-3-5-3-4-r3.dat
+20181118/user2/user2-3-5-3-4-r4.dat
+20181118/user2/user2-3-5-3-4-r5.dat
+20181118/user2/user2-3-5-3-4-r6.dat
+20181209_user6/user6-3-1-1-5-r1.dat
+20181209_user6/user6-3-1-1-5-r2.dat
+20181209_user6/user6-3-1-1-5-r3.dat
+20181209_user6/user6-3-1-1-5-r4.dat
+20181209_user6/user6-3-1-1-5-r5.dat
+20181209_user6/user6-3-1-1-5-r6.dat
+20181211/user8/user8-1-1-1-1-r1.dat
+20181211/user8/user8-1-1-1-1-r2.dat
+20181211/user8/user8-1-1-1-1-r3.dat
+20181211/user8/user8-1-1-1-1-r4.dat
+20181211/user8/user8-1-1-1-1-r5.dat
+20181211/user8/user8-1-1-1-1-r6.dat
+20181211/user8/user8-3-3-3-5-r1.dat
+20181211/user8/user8-3-3-3-5-r2.dat
+20181211/user8/user8-3-3-3-5-r3.dat
+20181211/user8/user8-3-3-3-5-r4.dat
+20181211/user8/user8-3-3-3-5-r5.dat
+20181211/user8/user8-3-3-3-5-r6.dat
+20181211/user9/user9-1-1-1-1-r1.dat
+20181211/user9/user9-1-1-1-1-r2.dat
+20181211/user9/user9-1-1-1-1-r3.dat
+20181211/user9/user9-1-1-1-1-r4.dat
+20181211/user9/user9-1-1-1-1-r5.dat
+20181211/user9/user9-1-1-1-1-r6.dat
+
+Bad Format Files (filename split parts < 6)
+------------------------------------------
+Total bad format files: 0
+
+Conflict Files (destination already exists)
+------------------------------------------
+Total conflict files: 0
+
+Per User / Label (.dat file count)
+----------------------------------
+user1	label=1	count=2550
+user1	label=2	count=2550
+user1	label=3	count=2550
+user1	label=4	count=2250
+user1	label=5	count=2250
+user1	label=6	count=2250
+user1	label=7	count=2250
+user1	label=8	count=2250
+user1	label=9	count=2250
+user1	label=10	count=4200
+user1	label=11	count=1800
+user1	label=12	count=1800
+user1	label=13	count=2400
+user1	label=14	count=2400
+user1	label=15	count=2400
+user1	label=16	count=2400
+user1	label=17	count=2400
+user1	label=18	count=2400
+user1	label=19	count=2400
+user1	label=20	count=2400
+user1	label=21	count=2400
+user10	label=1	count=750
+user10	label=2	count=750
+user10	label=3	count=750
+user10	label=4	count=750
+user10	label=5	count=750
+user10	label=6	count=750
+user10	label=7	count=750
+user10	label=8	count=750
+user10	label=9	count=750
+user11	label=1	count=750
+user11	label=2	count=750
+user11	label=3	count=750
+user11	label=4	count=750
+user11	label=5	count=750
+user11	label=6	count=750
+user11	label=7	count=750
+user11	label=8	count=750
+user11	label=9	count=750
+user12	label=1	count=750
+user12	label=2	count=750
+user12	label=3	count=750
+user12	label=4	count=750
+user12	label=5	count=750
+user12	label=6	count=750
+user12	label=7	count=750
+user12	label=8	count=750
+user12	label=9	count=750
+user13	label=1	count=750
+user13	label=2	count=750
+user13	label=3	count=750
+user13	label=4	count=750
+user13	label=5	count=750
+user13	label=6	count=750
+user13	label=7	count=750
+user13	label=8	count=750
+user13	label=9	count=750
+user14	label=1	count=750
+user14	label=2	count=750
+user14	label=3	count=750
+user14	label=4	count=750
+user14	label=5	count=750
+user14	label=6	count=750
+user14	label=7	count=750
+user14	label=8	count=750
+user14	label=9	count=750
+user15	label=1	count=750
+user15	label=2	count=750
+user15	label=3	count=750
+user15	label=4	count=750
+user15	label=5	count=750
+user15	label=6	count=750
+user15	label=7	count=750
+user15	label=8	count=750
+user15	label=9	count=750
+user16	label=1	count=750
+user16	label=2	count=750
+user16	label=3	count=750
+user16	label=4	count=750
+user16	label=5	count=750
+user16	label=6	count=750
+user16	label=7	count=750
+user16	label=8	count=750
+user16	label=9	count=750
+user17	label=1	count=750
+user17	label=2	count=750
+user17	label=3	count=750
+user17	label=4	count=750
+user17	label=5	count=750
+user17	label=6	count=750
+user17	label=7	count=750
+user17	label=8	count=750
+user17	label=9	count=750
+user2	label=1	count=2250
+user2	label=2	count=1500
+user2	label=3	count=1494
+user2	label=4	count=4500
+user2	label=5	count=4500
+user2	label=6	count=4500
+user2	label=7	count=4500
+user2	label=8	count=4500
+user2	label=9	count=4500
+user2	label=10	count=2250
+user2	label=11	count=750
+user2	label=12	count=750
+user2	label=13	count=1500
+user2	label=14	count=1500
+user2	label=15	count=1500
+user2	label=16	count=1500
+user2	label=17	count=1500
+user2	label=18	count=1500
+user2	label=19	count=1500
+user2	label=20	count=1500
+user2	label=21	count=1500
+user3	label=1	count=2250
+user3	label=2	count=2250
+user3	label=3	count=2250
+user3	label=4	count=4500
+user3	label=5	count=3750
+user3	label=6	count=4500
+user3	label=7	count=3750
+user3	label=8	count=3750
+user3	label=9	count=4500
+user3	label=10	count=750
+user3	label=11	count=750
+user3	label=12	count=750
+user4	label=1	count=750
+user4	label=2	count=750
+user4	label=3	count=750
+user4	label=10	count=750
+user4	label=11	count=750
+user4	label=12	count=750
+user5	label=1	count=750
+user5	label=2	count=750
+user5	label=3	count=750
+user5	label=4	count=1500
+user5	label=5	count=1500
+user5	label=6	count=1500
+user5	label=7	count=1500
+user5	label=8	count=1500
+user5	label=9	count=1500
+user6	label=1	count=1500
+user6	label=2	count=1500
+user6	label=3	count=1494
+user6	label=4	count=750
+user6	label=5	count=750
+user6	label=6	count=1500
+user6	label=9	count=1500
+user7	label=1	count=750
+user7	label=2	count=750
+user7	label=3	count=750
+user7	label=4	count=750
+user7	label=6	count=750
+user7	label=9	count=750
+user8	label=1	count=744
+user8	label=2	count=750
+user8	label=3	count=744
+user8	label=4	count=750
+user8	label=6	count=750
+user8	label=9	count=750
+user9	label=1	count=744
+user9	label=2	count=750
+user9	label=3	count=750
+user9	label=4	count=750
+user9	label=6	count=750
+user9	label=9	count=750
+
+Per User Total (.dat file count)
+-------------------------------
+user1	total=50550
+user10	total=6750
+user11	total=6750
+user12	total=6750
+user13	total=6750
+user14	total=6750
+user15	total=6750
+user16	total=6750
+user17	total=6750
+user2	total=49494
+user3	total=33750
+user4	total=4500
+user5	total=11250
+user6	total=8994
+user7	total=4500
+user8	total=4488
+user9	total=4494
+
+Per Label Total (.dat file count)
+--------------------------------
+label=1	total=18288
+label=2	total=17550
+label=3	total=17532
+label=4	total=21750
+label=5	total=18750
+label=6	total=22500
+label=7	total=18000
+label=8	total=18000
+label=9	total=22500
+label=10	total=7950
+label=11	total=4050
+label=12	total=4050
+label=13	total=3900
+label=14	total=3900
+label=15	total=3900
+label=16	total=3900
+label=17	total=3900
+label=18	total=3900
+label=19	total=3900
+label=20	total=3900
+label=21	total=3900

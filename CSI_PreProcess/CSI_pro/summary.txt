@@ -1,0 +1,11 @@
+Widar3.0 Processing Summary
+===========================
+Total grouped samples: 37670
+Successful files (saved + skipped existing): 37670
+Saved new files: 9570
+Skipped existing files: 28100
+Failed files: 0
+
+
+Failed Files
+------------
