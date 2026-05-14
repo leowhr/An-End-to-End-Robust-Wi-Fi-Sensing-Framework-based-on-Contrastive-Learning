@@ -38,17 +38,18 @@ os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
 def pre_training():
     bimamba_type = "v2"
     pre_datasize = 1
+    process_type = "type2" # 数据增强类型，"type1" 包含裁剪、平移和掩码，"type2" 包含添加随机噪声，"type3" 不进行数据增强
     pre_link = 6
 
     # 输入类型："both"（幅值+相位），"amp"（仅幅值），"pha"（仅相位）
     input_type = "both"
     # 日志位置
-    log_dir_path = "./runs/PRE/pre_100_Biblockv2_3+3link_test_bz64"
+    log_dir_path = "./runs/PRE/pre_100_Biblockv2_3+3link_test_process_type2"
 
     # 加载的参数
-    old_Pre_checkpoint_path = "./model_weight/PRE/pre_100_Biblockv2_3+3link_test_bz64.pth"
+    old_Pre_checkpoint_path = "./model_weight/PRE/pre_100_Biblockv2_3+3link_test_process_type2.pth"
 
-    new_Pre_checkpoint_path = "./model_weight/PRE/pre_100_Biblockv2_3+3link_test_bz64.pth"
+    new_Pre_checkpoint_path = "./model_weight/PRE/pre_100_Biblockv2_3+3link_test_process_type2.pth"
 
     device = torch.device('cuda:1' if torch.cuda.is_available() else 'cpu')
 
@@ -73,7 +74,7 @@ def pre_training():
     final_lr = 0.0001 # 最终学习率 0.0001
     init_weight_decay = 1e-3 # 衰减系数 0.001
     num_epochs = 100 # 先用10轮进行训练
-    batch_size = 64 # batch大小
+    batch_size = 128 # batch大小
     data_folder = '/mnt/data/keran/project/WiSRL/dataset/WIDAR_Pre' # 数据集路径
     # data_folder = r"E:\CodeSpace\Wi-Mamba\Wimamba\Widar3.0\CSI_try"
     # data_folder = '/mnt/data/keran/project/Flow-LLM/FAE/dataset/XRF55_Pre'
@@ -89,7 +90,7 @@ def pre_training():
     circular_range=(-50, 50) # 循环平移范围，-50 到 50 之间随机平移
     mask_ratio=(0, 0.1) # 随机掩码比例范围，0-0.1 之间随机掩码
     # 加载数据
-    full_dataset = ComplexDataset(data_folder, crop_ratio=crop_ratio, circular_range=circular_range, mask_ratio=mask_ratio)
+    full_dataset = ComplexDataset(data_folder, crop_ratio=crop_ratio, circular_range=circular_range, mask_ratio=mask_ratio, process_type=process_type)
 
     # 数据集分割（固定索引，分别构建 train/val 数据集以设置不同 evaluate）
     train_size = int(0.8 * len(full_dataset) * pre_datasize)
@@ -98,8 +99,8 @@ def pre_training():
     train_indices = indices[:train_size]
     val_indices = indices[train_size:train_size + val_size]
 
-    train_base = ComplexDataset(data_folder, crop_ratio=crop_ratio, circular_range=circular_range, mask_ratio=mask_ratio)
-    val_base = ComplexDataset(data_folder, crop_ratio=crop_ratio, circular_range=circular_range, mask_ratio=mask_ratio)
+    train_base = ComplexDataset(data_folder, crop_ratio=crop_ratio, circular_range=circular_range, mask_ratio=mask_ratio, process_type=process_type)
+    val_base = ComplexDataset(data_folder, crop_ratio=crop_ratio, circular_range=circular_range, mask_ratio=mask_ratio, process_type=process_type)
     train_base.set_eval(False)
     val_base.set_eval(True) # 注意验证集是否进行增强，不增强则得到原始的两对三天线的差别
 

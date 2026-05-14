@@ -56,7 +56,7 @@ def trim_and_resize_csi(
 
 # 复数数据集类
 class ComplexDataset(Dataset):
-    def __init__(self, data_folder, crop_ratio=(0.9, 1.0), circular_range=(-50, 50), mask_ratio=(0, 0.1)):
+    def __init__(self, data_folder, crop_ratio=(0.9, 1.0), circular_range=(-50, 50), mask_ratio=(0, 0.1), process_type="type1"):
         """
         数据集加载类，将每个样本从复数矩阵转换为幅值和相位，并进行归一化处理。
 
@@ -65,6 +65,7 @@ class ComplexDataset(Dataset):
             crop_ratio (tuple): 裁剪比例
             circular_range (tuple): 循环平移帧的范围
             mask_ratio (tuple): 掩码比例
+            process_type (str): 数据增强类型，"type1" 包含裁剪、平移和掩码，"type2" 包含添加随机噪声，"type3" 不进行数据增强
         """
         self.data_folder = data_folder
         self.file_paths = [os.path.join(data_folder, fname) for fname in os.listdir(data_folder) if fname.endswith('.mat')]  # 假设每个文件都是 mat 格式
@@ -72,6 +73,8 @@ class ComplexDataset(Dataset):
         self.circular_range = circular_range
         self.mask_ratio = mask_ratio
         self.evaluate = False  # 是否评估模式，评估模式不进行数据增强
+        self.process_type = process_type  # 处理类型，决定是否进行特定的预处理步骤
+        assert process_type in ["type1", "type2", "type3"], "process_type must be 'type1', 'type2', or 'type3'"
 
     def __len__(self):
         """返回数据集中的样本数量"""
@@ -140,21 +143,29 @@ class ComplexDataset(Dataset):
             phase_view2 = phase[:, :, view2_idx].reshape(N, L, -1)  # view2 的相位
 
             # 数据增强：随机裁剪、循环平移、随机掩码
-            # 1. 随机裁剪
-            amp_view1 = self.random_crop(amp_view1, crop_ratio1)
-            phase_view1 = self.random_crop(phase_view1, crop_ratio1)
-            amp_view2 = self.random_crop(amp_view2, crop_ratio2)
-            phase_view2 = self.random_crop(phase_view2, crop_ratio2)
-            # 2. 循环平移
-            amp_view1 = np.roll(amp_view1, shift=circular_shift1, axis=0)
-            phase_view1 = np.roll(phase_view1, shift=circular_shift1, axis=0)
-            amp_view2 = np.roll(amp_view2, shift=circular_shift2, axis=0)
-            phase_view2 = np.roll(phase_view2, shift=circular_shift2, axis=0)
-            # 3. 随机掩码
-            amp_view1 = self.random_mask(amp_view1, mask_ratio1)
-            phase_view1 = self.random_mask(phase_view1, mask_ratio1)
-            amp_view2 = self.random_mask(amp_view2, mask_ratio2)
-            phase_view2 = self.random_mask(phase_view2, mask_ratio2)
+            if self.process_type == "type1":
+                # 1. 随机裁剪
+                amp_view1 = self.random_crop(amp_view1, crop_ratio1)
+                phase_view1 = self.random_crop(phase_view1, crop_ratio1)
+                amp_view2 = self.random_crop(amp_view2, crop_ratio2)
+                phase_view2 = self.random_crop(phase_view2, crop_ratio2)
+                # 2. 循环平移
+                amp_view1 = np.roll(amp_view1, shift=circular_shift1, axis=0)
+                phase_view1 = np.roll(phase_view1, shift=circular_shift1, axis=0)
+                amp_view2 = np.roll(amp_view2, shift=circular_shift2, axis=0)
+                phase_view2 = np.roll(phase_view2, shift=circular_shift2, axis=0)
+                # 3. 随机掩码
+                amp_view1 = self.random_mask(amp_view1, mask_ratio1)
+                phase_view1 = self.random_mask(phase_view1, mask_ratio1)
+                amp_view2 = self.random_mask(amp_view2, mask_ratio2)
+                phase_view2 = self.random_mask(phase_view2, mask_ratio2)
+            
+            # 数据增强：添加随机噪声
+            elif self.process_type == "type2":
+                amp_view1 = self.random_noise(amp_view1)
+                phase_view1 = self.random_noise(phase_view1)
+                amp_view2 = self.random_noise(amp_view2)
+                phase_view2 = self.random_noise(phase_view2)
 
             # 从文件名中提取 label
             label = int(file_path.split('-')[1])  # 假设 label 是文件名中第一个 '-' 后面的数字
@@ -184,7 +195,10 @@ class ComplexDataset(Dataset):
         return amp_view1, phase_view1, amp_view2, phase_view2, label
         
         
-
+    def random_noise(self, x, noise_level=0.03):
+        """在时域上添加随机噪声"""
+        noise = np.random.normal(0, noise_level, size=x.shape)
+        return x + noise
 
     
     def random_mask(self, x, mask_ratio):

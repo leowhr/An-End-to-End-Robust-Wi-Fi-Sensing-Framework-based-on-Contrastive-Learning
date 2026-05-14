@@ -31,24 +31,25 @@ os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
 def fine_tuning():
     bimamba_type = "v2"
     tune_datasize = 1.0
+    process_type="type3"
     pre_link = 6
     tune_link = 6
 
     # 输入类型："both"（幅值+相位），"amp"（仅幅值），"pha"（仅相位）
     input_type = "both"
 
-    Pre_checkpoint_path = "./model_weight/PRE/pre_100_Biblockv2_3+3link_test_bz64.pth" #预训练权重
+    Pre_checkpoint_path = "./model_weight/PRE/pre_100_Biblockv2_3+3link_test_process_type3.pth" #预训练权重
     # Pre_checkpoint_path = "./model_weight/PRE/pre_75_100_Biblockv2_widar_both_1link.pth" #预训练权重
     # Tune_checkpoint_path = "./model_weight/CLS/Finetune/tune_75_100_Biblockv2_HGR(5000).pth" #预训练权重
 
-    log_dir_path = "./runs/Finetune/CLS/tune_100_100_Biblockv2_3+3link_test_bz64" #日志
+    log_dir_path = "./runs/Finetune/CLS/tune_100_100_Biblockv2_3+3link_test_process_type3" #日志
 
     ## 加载的数据
 
-    old_Tune_checkpoint_path = "./model_weight/Finetune/CLS/tune_100_100_Biblockv2_3+3link_test_bz64.pth" # 上次训练某一轮保存的微调权重和优化器状态
+    old_Tune_checkpoint_path = "./model_weight/Finetune/CLS/tune_100_100_Biblockv2_3+3link_test_process_type3.pth" # 上次训练某一轮保存的微调权重和优化器状态
 
     ## 保存的数据
-    new_Tune_checkpoint_path = "./model_weight/Finetune/CLS/tune_100_100_Biblockv2_3+3link_test_bz64.pth" # 每一轮保存的微调权重和优化器状态
+    new_Tune_checkpoint_path = "./model_weight/Finetune/CLS/tune_100_100_Biblockv2_3+3link_test_process_type3.pth" # 每一轮保存的微调权重和优化器状态
 
     device = torch.device('cuda:1' if torch.cuda.is_available() else 'cpu')
 
@@ -75,7 +76,7 @@ def fine_tuning():
     final_lr = 7e-05 # 最终学习率
     init_weight_decay = 2e-3 # 衰减系数 0.002
     num_epochs = 50 # 先用50轮进行训练
-    batch_size = 64 # batch大小
+    batch_size = 128 # batch大小
     data_folder = '/mnt/data/keran/project/WiSRL/dataset/10fenlei(5000)' # 数据集路径
     # data_folder = '/mnt/data/keran/project/Flow-LLM/FAE/dataset/XRF55_HAR'
     # data_folder = '/mnt/data/keran/project/Flow-LLM/FAE/dataset/10fenlei'
@@ -87,7 +88,7 @@ def fine_tuning():
 
 
     # 加载数据
-    dataset = ComplexDataset(data_folder)
+    dataset = ComplexDataset(data_folder, process_type=process_type)
     dataset.set_eval(True)  # 设置为评估模式，确保数据不被增强
 
     # 数据集分割* tune_datasize,generator=generator
