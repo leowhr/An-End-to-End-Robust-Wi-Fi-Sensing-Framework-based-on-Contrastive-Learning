@@ -10,6 +10,7 @@ import numpy as np
 import random
 
 from models.pretraining_Biblock_model_simCLR import WiSRL_pre # Bi-Block
+from models.pretraining_model_simCLR import WiSRL_pre as WiSRL_pre_SB # Single-Block
 from models.pretrain_Biblock_model_simCLR_single import WiSRL_pre as WiSRL_pre_single # Single-input
 from utils import nt_xent_loss, set_seed, seed_worker
 
@@ -30,26 +31,27 @@ os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
 ## 下游任务微调
 def fine_tuning():
     bimamba_type = "v2"
-    tune_datasize = 1.0
-    process_type="type3"
+    Biblock = True # 是否使用 Bi-Block 模型，True 使用 Bi-Block 模型，False 使用 Single-Block 模型
+    tune_datasize = 1.0 # 微调数据占比，0.1 表示使用 10% 的数据进行微调，1.0 表示使用全部数据进行微调
+    process_type="type1" # 数据增强类型，"type1" 包含裁剪、平移和掩码，"type2" 包含添加随机噪声，"type3" 不进行数据增强
     pre_link = 6
     tune_link = 6
 
     # 输入类型："both"（幅值+相位），"amp"（仅幅值），"pha"（仅相位）
     input_type = "both"
 
-    Pre_checkpoint_path = "./model_weight/PRE/pre_100_Biblockv2_3+3link_test_process_type3.pth" #预训练权重
+    Pre_checkpoint_path = "./model_weight/PRE/pre_20_Biblockv2_3+3link_test.pth" #预训练权重
     # Pre_checkpoint_path = "./model_weight/PRE/pre_75_100_Biblockv2_widar_both_1link.pth" #预训练权重
     # Tune_checkpoint_path = "./model_weight/CLS/Finetune/tune_75_100_Biblockv2_HGR(5000).pth" #预训练权重
 
-    log_dir_path = "./runs/Finetune/CLS/tune_100_100_Biblockv2_3+3link_test_process_type3" #日志
+    log_dir_path = "./runs/Finetune/CLS/tune_20_100_Biblockv2_3+3link_test" #日志
 
     ## 加载的数据
 
-    old_Tune_checkpoint_path = "./model_weight/Finetune/CLS/tune_100_100_Biblockv2_3+3link_test_process_type3.pth" # 上次训练某一轮保存的微调权重和优化器状态
+    old_Tune_checkpoint_path = "./model_weight/Finetune/CLS/tune_20_100_Biblockv2_3+3link_test.pth" # 上次训练某一轮保存的微调权重和优化器状态
 
     ## 保存的数据
-    new_Tune_checkpoint_path = "./model_weight/Finetune/CLS/tune_100_100_Biblockv2_3+3link_test_process_type3.pth" # 每一轮保存的微调权重和优化器状态
+    new_Tune_checkpoint_path = "./model_weight/Finetune/CLS/tune_20_100_Biblockv2_3+3link_test.pth" # 每一轮保存的微调权重和优化器状态
 
     device = torch.device('cuda:1' if torch.cuda.is_available() else 'cpu')
 

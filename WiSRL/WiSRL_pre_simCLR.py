@@ -23,6 +23,7 @@ import numpy as np
 import random
 
 from models.pretraining_Biblock_model_simCLR import WiSRL_pre # Bi-Block
+from models.pretraining_model_simCLR import WiSRL_pre as WiSRL_pre_SB # Single-Block
 from models.pretrain_Biblock_model_simCLR_single import WiSRL_pre as WiSRL_pre_single # Single-input
 from utils import nt_xent_loss, set_seed, seed_worker
 
@@ -37,19 +38,20 @@ os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
 ## 预训练模型
 def pre_training():
     bimamba_type = "v2"
-    pre_datasize = 1
-    process_type = "type2" # 数据增强类型，"type1" 包含裁剪、平移和掩码，"type2" 包含添加随机噪声，"type3" 不进行数据增强
+    Biblock = True # 是否使用 Bi-Block 模型，True 使用 Bi-Block 模型，False 使用 Single-Block 模型
+    pre_datasize = 1 # 预训练数据量，1 表示使用全部数据进行预训练，0.8 表示使用 80% 的数据进行预训练，以此类推
+    process_type = "type1" # 数据增强类型，"type1" 包含裁剪、平移和掩码，"type2" 包含添加随机噪声，"type3" 不进行数据增强
     pre_link = 6
 
     # 输入类型："both"（幅值+相位），"amp"（仅幅值），"pha"（仅相位）
     input_type = "both"
     # 日志位置
-    log_dir_path = "./runs/PRE/pre_100_Biblockv2_3+3link_test_process_type2"
+    log_dir_path = "./runs/PRE/pre_100_Biblockv2_3+3link_test_bz32"
 
     # 加载的参数
-    old_Pre_checkpoint_path = "./model_weight/PRE/pre_100_Biblockv2_3+3link_test_process_type2.pth"
+    old_Pre_checkpoint_path = "./model_weight/PRE/pre_100_Biblockv2_3+3link_test_bz32.pth"
 
-    new_Pre_checkpoint_path = "./model_weight/PRE/pre_100_Biblockv2_3+3link_test_process_type2.pth"
+    new_Pre_checkpoint_path = "./model_weight/PRE/pre_100_Biblockv2_3+3link_test_bz32.pth"
 
     device = torch.device('cuda:1' if torch.cuda.is_available() else 'cpu')
 
@@ -74,7 +76,7 @@ def pre_training():
     final_lr = 0.0001 # 最终学习率 0.0001
     init_weight_decay = 1e-3 # 衰减系数 0.001
     num_epochs = 100 # 先用10轮进行训练
-    batch_size = 128 # batch大小
+    batch_size = 32 # batch大小
     data_folder = '/mnt/data/keran/project/WiSRL/dataset/WIDAR_Pre' # 数据集路径
     # data_folder = r"E:\CodeSpace\Wi-Mamba\Wimamba\Widar3.0\CSI_try"
     # data_folder = '/mnt/data/keran/project/Flow-LLM/FAE/dataset/XRF55_Pre'
@@ -132,7 +134,13 @@ def pre_training():
 
 
     # 初始化模型
-    model = WiSRL_pre(
+    model = WiSRL_pre_SB(
+        input_dim=input_dim_pre,
+        hidden_dim=hidden_dim,
+        proj_dim=proj_dim,
+        bimamba_type=bimamba_type,
+        encoder_nlayers=encoder_n_layers
+    ).to(device) if not Biblock else WiSRL_pre(
         input_dim=input_dim_pre,
         hidden_dim=hidden_dim,
         proj_dim=proj_dim,
