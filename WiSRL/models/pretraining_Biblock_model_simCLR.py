@@ -67,6 +67,7 @@ class WiSRL_pre(nn.Module):
         proj_dim: int,
         bimamba_type,
         encoder_nlayers: int,
+        Proj_head = True
     ):
         super().__init__()
         self.embedding_amp = nn.Linear(input_dim, hidden_dim)  # 幅值输入的线性嵌入
@@ -82,7 +83,7 @@ class WiSRL_pre(nn.Module):
             n_layers=encoder_nlayers
         ) # 相位编码器
         self.middle_concat = MiddleConcat(hidden_dim)  # 中间特征融合模块
-        if proj_dim > 0:
+        if proj_dim > 0 and Proj_head:
             self.projection_head = ProjectionHead(hidden_dim, proj_dim)  # SimCLR投影头
         else:
             self.projection_head = nn.Identity()  # 如果不需要投影头，使用恒等映射  
