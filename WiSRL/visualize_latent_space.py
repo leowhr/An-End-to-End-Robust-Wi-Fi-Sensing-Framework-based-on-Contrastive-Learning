@@ -119,12 +119,12 @@ def main() -> None:
     parser.add_argument("--data-folder", type=str, required=True, help="Folder containing .mat CSI samples")
     parser.add_argument("--batch-size", type=int, default=64)
     parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--device", type=str, default="cuda" if torch.cuda.is_available() else "cpu")
+    parser.add_argument("--device", type=str, default="cuda:1" if torch.cuda.is_available() else "cpu")
     parser.add_argument("--model-module", type=str, required=True, help="Python module path for the model")
     parser.add_argument("--model-class", type=str, required=True, help="Model class name")
     parser.add_argument("--model-kwargs", type=str, default="", help="JSON string for model init kwargs")
     parser.add_argument("--ckpt", type=str, required=True, help="Path to model checkpoint")
-    parser.add_argument("--out", type=str, default="visualization_outputs/latent_view_similarity.png")
+    parser.add_argument("--out", type=str, default="visualization_outputs/latent_view_similarity_preprocess_type2.png")
     args = parser.parse_args()
 
     torch.manual_seed(args.seed)
@@ -155,4 +155,8 @@ if __name__ == "__main__":
 
 
 # runs:
-# python3 visualize_latent_space.py   --data-folder '/mnt/data/keran/project/WiSRL/dataset/WIDAR_Pre'   --model-module models.pretraining_Biblock_model_simCLR   --model-class WiSRL_pre   --model-kwargs '{"encoder_nlayers":3,"Proj_head":true,"proj_dim":64,"input_dim":270,"hidden_dim":64,"bimamba_type":"v2"}'   --ckpt "./model_weight/PRE/pre_100_Biblockv2_3+3link_test.pth"
+# python3 visualize_latent_space.py   --data-folder '/mnt/data/keran/project/WiSRL/dataset/WIDAR_Pre'   --model-module models.pretraining_Biblock_model_simCLR   --model-class WiSRL_pre   --model-kwargs '{"encoder_nlayers":3,"Proj_head":true,"proj_dim":64,"input_dim":270,"hidden_dim":64,"bimamba_type":"v2"}'   --ckpt "./model_weight/PRE/pre_100_Biblockv2_3+3link_test_singleBlock.pth"
+# python3 visualize_latent_space.py   --data-folder '/mnt/data/keran/project/WiSRL/dataset/WIDAR_Pre'   --model-module models.pretraining_Biblock_model_simCLR   --model-class WiSRL_pre   --model-kwargs '{"encoder_nlayers":3,"Proj_head":true,"proj_dim":64,"input_dim":270,"hidden_dim":64,"bimamba_type":"v2"}'   --ckpt "./model_weight/PRE/pre_100_Biblockv2_3+3link_test_bz64.pth"
+# python3 visualize_latent_space.py   --data-folder '/mnt/data/keran/project/WiSRL/dataset/WIDAR_Pre'   --model-module models.pretraining_Biblock_model_simCLR   --model-class WiSRL_pre   --model-kwargs '{"encoder_nlayers":3,"Proj_head":true,"proj_dim":64,"input_dim":270,"hidden_dim":64,"bimamba_type":"v2"}'   --ckpt "./model_weight/PRE/pre_100_Biblockv2_3+3link_test_preprocess_type2.pth"
+# python3 visualize_latent_space.py   --data-folder '/mnt/data/keran/project/WiSRL/dataset/WIDAR_Pre'   --model-module models.pretraining_Biblock_model_simCLR   --model-class WiSRL_pre   --model-kwargs '{"encoder_nlayers":3,"Proj_head":false,"proj_dim":64,"input_dim":270,"hidden_dim":64,"bimamba_type":"v2"}'   --ckpt "./model_weight/PRE/pre_100_Biblockv2_3+3link_test_noProjHead.pth"
+# python3 visualize_latent_space.py   --data-folder '/mnt/data/keran/project/WiSRL/dataset/WIDAR_Pre'   --model-module models.pretraining_model_simCLR   --model-class WiSRL_pre   --model-kwargs '{"encoder_nlayers":3,"proj_dim":64,"input_dim":270,"hidden_dim":64,"bimamba_type":"v2"}'   --ckpt "./model_weight/PRE/pre_100_Biblockv2_3+3link_test_singleBlock.pth"

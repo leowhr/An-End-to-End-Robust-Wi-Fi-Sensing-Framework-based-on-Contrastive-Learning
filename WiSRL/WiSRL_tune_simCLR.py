@@ -34,27 +34,27 @@ def fine_tuning():
     Biblock = True # 是否使用 Bi-Block 模型，True 使用 Bi-Block 模型，False 使用 Single-Block 模型
     tune_datasize = 1.0 # 微调数据占比，0.1 表示使用 10% 的数据进行微调，1.0 表示使用全部数据进行微调
     process_type="type1" # 数据增强类型，"type1" 包含裁剪、平移和掩码，"type2" 包含添加随机噪声，"type3" 不进行数据增强
-    Proj_head = False # 是否使用 SimCLR 的投影头，True 使用投影头，False 不使用投影头
+    Proj_head = True # 是否使用 SimCLR 的投影头，True 使用投影头，False 不使用投影头
     pre_link = 6
     tune_link = 6
 
     # 输入类型："both"（幅值+相位），"amp"（仅幅值），"pha"（仅相位）
     input_type = "both"
 
-    Pre_checkpoint_path = "./model_weight/PRE/pre_100_Biblockv2_3+3link_test_noProjHead.pth" #预训练权重
+    Pre_checkpoint_path = "./model_weight/PRE/pre_100_Biblockv2_3+3link_test_Temp25.pth" #预训练权重
     # Pre_checkpoint_path = "./model_weight/PRE/pre_75_100_Biblockv2_widar_both_1link.pth" #预训练权重
     # Tune_checkpoint_path = "./model_weight/CLS/Finetune/tune_75_100_Biblockv2_HGR(5000).pth" #预训练权重
 
-    log_dir_path = "./runs/Finetune/CLS/tune_100_100_Biblockv2_3+3link_test_noProjHead" #日志
+    log_dir_path = "./runs/Finetune/CLS/tune_100_100_Biblockv2_3+3link_test_Temp25" #日志
 
     ## 加载的数据
 
-    old_Tune_checkpoint_path = "./model_weight/Finetune/CLS/tune_100_100_Biblockv2_3+3link_test_noProjHead.pth" # 上次训练某一轮保存的微调权重和优化器状态
+    old_Tune_checkpoint_path = "./model_weight/Finetune/CLS/tune_100_100_Biblockv2_3+3link_test_Temp25.pth" # 上次训练某一轮保存的微调权重和优化器状态
 
     ## 保存的数据
-    new_Tune_checkpoint_path = "./model_weight/Finetune/CLS/tune_100_100_Biblockv2_3+3link_test_noProjHead.pth" # 每一轮保存的微调权重和优化器状态
+    new_Tune_checkpoint_path = "./model_weight/Finetune/CLS/tune_100_100_Biblockv2_3+3link_test_Temp25.pth" # 每一轮保存的微调权重和优化器状态
 
-    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    device = torch.device('cuda:1' if torch.cuda.is_available() else 'cpu')
 
     seed = 624 # 随机种子，可以换个数字试试
     set_seed(seed)  # 设置随机种子，保证结果可复现
@@ -110,7 +110,13 @@ def fine_tuning():
 
 
     # 初始化模型
-    model_pre = WiSRL_pre(
+    model_pre = WiSRL_pre_SB(
+        input_dim=input_dim_pre,
+        hidden_dim=hidden_dim,
+        proj_dim=0,  # 微调阶段不使用投影头
+        bimamba_type=bimamba_type,
+        encoder_nlayers=encoder_n_layers
+    ).to(device) if not Biblock else WiSRL_pre(
         input_dim=input_dim_pre,
         hidden_dim=hidden_dim,
         proj_dim=0,  # 微调阶段不使用投影头

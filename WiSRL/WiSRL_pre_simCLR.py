@@ -41,18 +41,20 @@ def pre_training():
     Biblock = True # 是否使用 Bi-Block 模型，True 使用 Bi-Block 模型，False 使用 Single-Block 模型
     pre_datasize = 1 # 预训练数据量，1 表示使用全部数据进行预训练，0.8 表示使用 80% 的数据进行预训练，以此类推
     process_type = "type1" # 数据增强类型，"type1" 包含裁剪、平移和掩码，"type2" 包含添加随机噪声，"type3" 不进行数据增强
-    Proj_head = False # 是否使用 SimCLR 的投影头，True 使用投影头，False 不使用投影头
+    Proj_head = True # 是否使用 SimCLR 的投影头，True 使用投影头，False 不使用投影头
+    batch_size = 128 # batch大小
+    temperature = 0.7  # SimCLR 中常用的温度参数
     pre_link = 6
 
     # 输入类型："both"（幅值+相位），"amp"（仅幅值），"pha"（仅相位）
     input_type = "both"
     # 日志位置
-    log_dir_path = "./runs/PRE/pre_100_Biblockv2_3+3link_test_noProjHead"
+    log_dir_path = "./runs/PRE/pre_100_Biblockv2_3+3link_test_Temp70"
 
     # 加载的参数
-    old_Pre_checkpoint_path = "./model_weight/PRE/pre_100_Biblockv2_3+3link_test_noProjHead.pth"
+    old_Pre_checkpoint_path = "./model_weight/PRE/pre_100_Biblockv2_3+3link_test_Temp70.pth"
 
-    new_Pre_checkpoint_path = "./model_weight/PRE/pre_100_Biblockv2_3+3link_test_noProjHead.pth"
+    new_Pre_checkpoint_path = "./model_weight/PRE/pre_100_Biblockv2_3+3link_test_Temp70.pth"
 
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
@@ -77,7 +79,6 @@ def pre_training():
     final_lr = 0.0001 # 最终学习率 0.0001
     init_weight_decay = 1e-3 # 衰减系数 0.001
     num_epochs = 100 # 先用10轮进行训练
-    batch_size = 128 # batch大小
     data_folder = '/mnt/data/keran/project/WiSRL/dataset/WIDAR_Pre' # 数据集路径
     # data_folder = r"E:\CodeSpace\Wi-Mamba\Wimamba\Widar3.0\CSI_try"
     # data_folder = '/mnt/data/keran/project/Flow-LLM/FAE/dataset/XRF55_Pre'
@@ -187,7 +188,6 @@ def pre_training():
 
     # 损失函数：采用 SimCLR 的 NT-Xent Loss
     loss_fn = nt_xent_loss
-    temperature = 0.5  # SimCLR 中常用的温度参数
 
     # # Convert data to PyTorch tensors
     # mag_tensor = torch.tensor(mag, dtype=torch.float32)
